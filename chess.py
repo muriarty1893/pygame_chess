@@ -151,6 +151,14 @@ def show_invalid_move_alert():
     pygame.time.delay(1000)
     pygame.display.set_caption('Chess')
 
+def draw_button(screen, text, x, y, width, height):
+    font = pygame.font.Font(None, 36)
+    button_rect = pygame.Rect(x, y, width, height)
+    pygame.draw.rect(screen, (100, 100, 100), button_rect)
+    button_text = font.render(text, True, (255, 255, 255))
+    text_rect = button_text.get_rect(center=button_rect.center)
+    screen.blit(button_text, text_rect)
+    return button_rect
 def main():
     clock = pygame.time.Clock()
     board = [
@@ -217,4 +225,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 #PRAISE
