@@ -139,6 +139,18 @@ def show_check_alert(player):
     pygame.time.delay(2000)
     pygame.display.set_caption('Chess')
 
+def show_invalid_move_alert():
+    pygame.display.set_caption("Invalid Move!")
+    alert = pygame.Surface((200, 100))
+    alert.fill((255, 0, 0))
+    font = pygame.font.Font(None, 36)
+    text = font.render("Invalid Move!", True, (255, 255, 255))
+    alert.blit(text, (10, 30))
+    screen.blit(alert, (WIDTH // 2 - 100, HEIGHT // 2 - 50))
+    pygame.display.update()
+    pygame.time.delay(1000)
+    pygame.display.set_caption('Chess')
+
 def main():
     clock = pygame.time.Clock()
     board = [
@@ -169,32 +181,37 @@ def main():
                 sys.exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 pos = pygame.mouse.get_pos()
-                row, col = pos[1] // SQUARE_SIZE, pos[0] // SQUARE_SIZE
-                if selected_square:
-                    if is_valid_move(board, selected_square, (row, col)):
-                        move_history.append((selected_square, (row, col), player_turn))
-                        move_piece(board, selected_square, (row, col))
-                        if check_game_over(board):
-                            print(f"Game over! {player_turn} wins!")
-                            pygame.quit()
-                            sys.exit()
-                        if is_in_check(board, 'b'):
-                            show_check_alert('Black')
-                        if is_in_check(board, 'w'):
-                            show_check_alert('White')
-                        selected_square = None
-                        player_turn = 'b' if player_turn == 'w' else 'w'
-                    else:
-                        selected_square = None
+                if undo_button.collidepoint(pos):
+                    player_turn = undo_last_move()
                 else:
-                    if board[row][col] != '--' and board[row][col][0] == player_turn:
-                        selected_square = (row, col)
+                    row, col = pos[1] // SQUARE_SIZE, pos[0] // SQUARE_SIZE
+                    if selected_square:
+                        if is_valid_move(board, selected_square, (row, col)):
+                            move_history.append((selected_square, (row, col), player_turn))
+                            move_piece(board, selected_square, (row, col))
+                            if check_game_over(board):
+                                print(f"Game over! {player_turn} wins!")
+                                pygame.quit()
+                                sys.exit()
+                            if is_in_check(board, 'b'):
+                                show_check_alert('Black')
+                            if is_in_check(board, 'w'):
+                                show_check_alert('White')
+                            selected_square = None
+                            player_turn = 'b' if player_turn == 'w' else 'w'
+                        else:
+                            show_invalid_move_alert()
+                            selected_square = None
+                    else:
+                        if board[row][col] != '--' and board[row][col][0] == player_turn:
+                            selected_square = (row, col)
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_u:  # Press 'u' to undo the last move
                     player_turn = undo_last_move()
 
         draw_board(screen, selected_square)
         draw_pieces(screen, board)
+        undo_button = draw_button(screen, 'Undo', WIDTH - 100, HEIGHT - 50, 80, 40)
         pygame.display.flip()
         clock.tick(60)
 
