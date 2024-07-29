@@ -5,7 +5,7 @@ import sys
 pygame.init()
 
 # Constants
-WIDTH, HEIGHT = 1000, 1000
+WIDTH, HEIGHT = 800, 800
 ROWS, COLS = 8, 8
 SQUARE_SIZE = WIDTH // COLS
 
@@ -55,7 +55,7 @@ def is_valid_move(board, start_pos, end_pos):
     target = board[end_pos[0]][end_pos[1]]
     if target != '--' and target[0] == piece[0]:
         return False  # Can't capture own piece
-    
+
     direction = (end_pos[0] - start_pos[0], end_pos[1] - start_pos[1])
     if piece[1] == 'P':  # Pawn
         if piece[0] == 'w':
@@ -63,14 +63,14 @@ def is_valid_move(board, start_pos, end_pos):
                 return True
             if direction == (-2, 0) and start_pos[0] == 6 and target == '--' and board[start_pos[0] - 1][start_pos[1]] == '--':
                 return True
-            if direction == (-1, -1) or direction == (-1, 1) and target != '--':
+            if direction in [(-1, -1), (-1, 1)] and target != '--' and target[0] == 'b':
                 return True
         else:
             if direction == (1, 0) and target == '--':
                 return True
             if direction == (2, 0) and start_pos[0] == 1 and target == '--' and board[start_pos[0] + 1][start_pos[1]] == '--':
                 return True
-            if direction == (1, -1) or direction == (1, 1) and target != '--':
+            if direction in [(1, -1), (1, 1)] and target != '--' and target[0] == 'w':
                 return True
     elif piece[1] == 'R':  # Rook
         if direction[0] == 0 or direction[1] == 0:
@@ -121,7 +121,7 @@ def main():
                 if selected_square:
                     if is_valid_move(board, selected_square, (row, col)):
                         move_piece(board, selected_square, (row, col))
-                        if board[row][col][1] == 'K':
+                        if board[row][col][1] == 'K' and (start_pos[0], start_pos[1]) != (row, col):
                             print(f"Game over! {player_turn} wins!")
                             pygame.quit()
                             sys.exit()
