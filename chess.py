@@ -49,6 +49,17 @@ def draw_pieces(screen, board):
             piece = board[row][col]
             if piece != '--':
                 screen.blit(PIECES[piece], (col*SQUARE_SIZE, row*SQUARE_SIZE))
+def is_path_clear(board, start_pos, end_pos):
+    direction = (end_pos[0] - start_pos[0], end_pos[1] - start_pos[1])
+    step_row = 0 if direction[0] == 0 else direction[0] // abs(direction[0])
+    step_col = 0 if direction[1] == 0 else direction[1] // abs(direction[1])
+    
+    current_pos = (start_pos[0] + step_row, start_pos[1] + step_col)
+    while current_pos != end_pos:
+        if board[current_pos[0]][current_pos[1]] != '--':
+            return False
+        current_pos = (current_pos[0] + step_row, current_pos[1] + step_col)
+    return True
 
 def is_valid_move(board, start_pos, end_pos):
     piece = board[start_pos[0]][start_pos[1]]
@@ -73,16 +84,16 @@ def is_valid_move(board, start_pos, end_pos):
             if direction in [(1, -1), (1, 1)] and target != '--' and target[0] == 'w':
                 return True
     elif piece[1] == 'R':  # Rook
-        if direction[0] == 0 or direction[1] == 0:
+        if (direction[0] == 0 or direction[1] == 0) and is_path_clear(board, start_pos, end_pos):
             return True
     elif piece[1] == 'N':  # Knight
         if abs(direction[0] * direction[1]) == 2:
             return True
     elif piece[1] == 'B':  # Bishop
-        if abs(direction[0]) == abs(direction[1]):
+        if abs(direction[0]) == abs(direction[1]) and is_path_clear(board, start_pos, end_pos):
             return True
     elif piece[1] == 'Q':  # Queen
-        if direction[0] == 0 or direction[1] == 0 or abs(direction[0]) == abs(direction[1]):
+        if (direction[0] == 0 or direction[1] == 0 or abs(direction[0]) == abs(direction[1])) and is_path_clear(board, start_pos, end_pos):
             return True
     elif piece[1] == 'K':  # King
         if max(abs(direction[0]), abs(direction[1])) == 1:
@@ -140,9 +151,16 @@ def main():
         ['wP', 'wP', 'wP', 'wP', 'wP', 'wP', 'wP', 'wP'],
         ['wR', 'wN', 'wB', 'wQ', 'wK', 'wB', 'wN', 'wR']
     ]
-
+    
+    move_history = []
     selected_square = None
     player_turn = 'w'  # 'w' for white's turn, 'b' for black's turn
+
+    def undo_last_move():
+        if move_history:
+            last_move = move_history.pop()
+            move_piece(board, last_move[1], last_move[0])  # Undo the move
+            return last_move[2]  # Return the player turn before the last move
 
     while True:
         for event in pygame.event.get():
@@ -154,6 +172,7 @@ def main():
                 row, col = pos[1] // SQUARE_SIZE, pos[0] // SQUARE_SIZE
                 if selected_square:
                     if is_valid_move(board, selected_square, (row, col)):
+                        move_history.append((selected_square, (row, col), player_turn))
                         move_piece(board, selected_square, (row, col))
                         if check_game_over(board):
                             print(f"Game over! {player_turn} wins!")
@@ -170,6 +189,9 @@ def main():
                 else:
                     if board[row][col] != '--' and board[row][col][0] == player_turn:
                         selected_square = (row, col)
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_u:  # Press 'u' to undo the last move
+                    player_turn = undo_last_move()
 
         draw_board(screen, selected_square)
         draw_pieces(screen, board)
@@ -178,4 +200,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-# PRAISE
+#PRAISE
