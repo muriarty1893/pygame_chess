@@ -5,7 +5,7 @@ import sys
 pygame.init()
 
 # Constants
-WIDTH, HEIGHT = 800, 800
+WIDTH, HEIGHT = 1000, 1000
 ROWS, COLS = 8, 8
 SQUARE_SIZE = WIDTH // COLS
 
@@ -50,6 +50,45 @@ def draw_pieces(screen, board):
             if piece != '--':
                 screen.blit(PIECES[piece], (col*SQUARE_SIZE, row*SQUARE_SIZE))
 
+def is_valid_move(board, start_pos, end_pos):
+    piece = board[start_pos[0]][start_pos[1]]
+    target = board[end_pos[0]][end_pos[1]]
+    if target != '--' and target[0] == piece[0]:
+        return False  # Can't capture own piece
+    
+    direction = (end_pos[0] - start_pos[0], end_pos[1] - start_pos[1])
+    if piece[1] == 'P':  # Pawn
+        if piece[0] == 'w':
+            if direction == (-1, 0) and target == '--':
+                return True
+            if direction == (-2, 0) and start_pos[0] == 6 and target == '--' and board[start_pos[0] - 1][start_pos[1]] == '--':
+                return True
+            if direction == (-1, -1) or direction == (-1, 1) and target != '--':
+                return True
+        else:
+            if direction == (1, 0) and target == '--':
+                return True
+            if direction == (2, 0) and start_pos[0] == 1 and target == '--' and board[start_pos[0] + 1][start_pos[1]] == '--':
+                return True
+            if direction == (1, -1) or direction == (1, 1) and target != '--':
+                return True
+    elif piece[1] == 'R':  # Rook
+        if direction[0] == 0 or direction[1] == 0:
+            return True
+    elif piece[1] == 'N':  # Knight
+        if abs(direction[0] * direction[1]) == 2:
+            return True
+    elif piece[1] == 'B':  # Bishop
+        if abs(direction[0]) == abs(direction[1]):
+            return True
+    elif piece[1] == 'Q':  # Queen
+        if direction[0] == 0 or direction[1] == 0 or abs(direction[0]) == abs(direction[1]):
+            return True
+    elif piece[1] == 'K':  # King
+        if max(abs(direction[0]), abs(direction[1])) == 1:
+            return True
+    return False
+
 def move_piece(board, start_pos, end_pos):
     piece = board[start_pos[0]][start_pos[1]]
     board[start_pos[0]][start_pos[1]] = '--'
@@ -80,9 +119,16 @@ def main():
                 pos = pygame.mouse.get_pos()
                 row, col = pos[1] // SQUARE_SIZE, pos[0] // SQUARE_SIZE
                 if selected_square:
-                    move_piece(board, selected_square, (row, col))
-                    selected_square = None
-                    player_turn = 'b' if player_turn == 'w' else 'w'
+                    if is_valid_move(board, selected_square, (row, col)):
+                        move_piece(board, selected_square, (row, col))
+                        if board[row][col][1] == 'K':
+                            print(f"Game over! {player_turn} wins!")
+                            pygame.quit()
+                            sys.exit()
+                        selected_square = None
+                        player_turn = 'b' if player_turn == 'w' else 'w'
+                    else:
+                        selected_square = None
                 else:
                     if board[row][col] != '--' and board[row][col][0] == player_turn:
                         selected_square = (row, col)
