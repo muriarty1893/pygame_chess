@@ -1,5 +1,6 @@
 import pygame
 import sys
+import random
 
 # Initialize Pygame
 pygame.init()
@@ -173,6 +174,44 @@ def draw_button(screen, text, x, y, width, height):
     screen.blit(button_text, text_rect)
     return button_rect
 
+def draw_transparent_moves(screen, moves):
+    overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+    for move in moves:
+        row, col = move
+        s = pygame.Surface((SQUARE_SIZE, SQUARE_SIZE))
+        s.set_alpha(100)  # Transparency level
+        s.fill((0, 255, 0))  # Green color for moves
+        overlay.blit(s, (col * SQUARE_SIZE, row * SQUARE_SIZE))
+    screen.blit(overlay, (0, 0))
+
+def get_best_moves(board, player='w'):
+    valid_moves = get_all_valid_moves(board, player)
+    # En iyi hamleleri belirlemek için rastgele bir alt küme seçiyoruz
+    if len(valid_moves) > 5:
+        best_moves = random.sample(valid_moves, 5)
+    else:
+        best_moves = valid_moves
+    return [move[1] for move in best_moves]
+
+
+def get_all_valid_moves(board, player):
+    moves = []
+    for row in range(ROWS):
+        for col in range(COLS):
+            if board[row][col].startswith(player):
+                piece_moves = get_possible_moves(board, (row, col))
+                for move in piece_moves:
+                    if is_valid_move(board, (row, col), move):
+                        moves.append(((row, col), move))
+    return moves
+
+
+def bot_move(board, player):
+    valid_moves = get_all_valid_moves(board, player)
+    if valid_moves:
+        return random.choice(valid_moves)
+    return None
+
 def main():
     clock = pygame.time.Clock()
     board = [
@@ -198,6 +237,8 @@ def main():
             return last_move[2]  # Return the player turn before the last move
 
     while True:
+        best_moves = get_best_moves(board, 'w') if player_turn == 'w' else []
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -237,9 +278,12 @@ def main():
 
         draw_board(screen, selected_square, possible_moves)
         draw_pieces(screen, board)
+        draw_transparent_moves(screen, best_moves)
         undo_button = draw_button(screen, 'Undo', WIDTH - 100, HEIGHT - 50, 80, 40)
         pygame.display.flip()
         clock.tick(60)
 
 if __name__ == "__main__":
     main()
+
+#PRAISE
