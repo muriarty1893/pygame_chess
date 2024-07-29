@@ -94,6 +94,10 @@ def move_piece(board, start_pos, end_pos):
     board[start_pos[0]][start_pos[1]] = '--'
     board[end_pos[0]][end_pos[1]] = piece
 
+def check_game_over(board):
+    kings = [piece for row in board for piece in row if piece[1] == 'K']
+    return len(kings) < 2
+
 def main():
     clock = pygame.time.Clock()
     board = [
@@ -121,7 +125,7 @@ def main():
                 if selected_square:
                     if is_valid_move(board, selected_square, (row, col)):
                         move_piece(board, selected_square, (row, col))
-                        if board[row][col][1] == 'K' and (start_pos[0], start_pos[1]) != (row, col):
+                        if check_game_over(board):
                             print(f"Game over! {player_turn} wins!")
                             pygame.quit()
                             sys.exit()
