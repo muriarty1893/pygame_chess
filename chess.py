@@ -13,6 +13,8 @@ SQUARE_SIZE = WIDTH // COLS
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 HIGHLIGHT_COLOR = (200, 200, 0)
+SELECTED_COLOR = (100, 100, 255)
+MOVE_COLOR = (0, 255, 0)
 
 # Load and scale images
 PIECES = {
@@ -34,13 +36,15 @@ PIECES = {
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption('Chess')
 
-def draw_board(screen, selected_square=None):
+def draw_board(screen, selected_square=None, possible_moves=[]):
     colors = [WHITE, BLACK]
     for row in range(ROWS):
         for col in range(COLS):
             color = colors[(row + col) % 2]
             if selected_square and (row, col) == selected_square:
-                color = HIGHLIGHT_COLOR
+                color = SELECTED_COLOR
+            elif (row, col) in possible_moves:
+                color = MOVE_COLOR
             pygame.draw.rect(screen, color, (col*SQUARE_SIZE, row*SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
 
 def draw_pieces(screen, board):
@@ -49,6 +53,7 @@ def draw_pieces(screen, board):
             piece = board[row][col]
             if piece != '--':
                 screen.blit(PIECES[piece], (col*SQUARE_SIZE, row*SQUARE_SIZE))
+
 def is_path_clear(board, start_pos, end_pos):
     direction = (end_pos[0] - start_pos[0], end_pos[1] - start_pos[1])
     step_row = 0 if direction[0] == 0 else direction[0] // abs(direction[0])
@@ -99,6 +104,14 @@ def is_valid_move(board, start_pos, end_pos):
         if max(abs(direction[0]), abs(direction[1])) == 1:
             return True
     return False
+
+def get_possible_moves(board, start_pos):
+    possible_moves = []
+    for row in range(ROWS):
+        for col in range(COLS):
+            if is_valid_move(board, start_pos, (row, col)):
+                possible_moves.append((row, col))
+    return possible_moves
 
 def move_piece(board, start_pos, end_pos):
     piece = board[start_pos[0]][start_pos[1]]
@@ -159,6 +172,7 @@ def draw_button(screen, text, x, y, width, height):
     text_rect = button_text.get_rect(center=button_rect.center)
     screen.blit(button_text, text_rect)
     return button_rect
+
 def main():
     clock = pygame.time.Clock()
     board = [
@@ -174,6 +188,7 @@ def main():
     
     move_history = []
     selected_square = None
+    possible_moves = []
     player_turn = 'w'  # 'w' for white's turn, 'b' for black's turn
 
     def undo_last_move():
@@ -206,18 +221,21 @@ def main():
                             if is_in_check(board, 'w'):
                                 show_check_alert('White')
                             selected_square = None
+                            possible_moves = []
                             player_turn = 'b' if player_turn == 'w' else 'w'
                         else:
                             show_invalid_move_alert()
                             selected_square = None
+                            possible_moves = []
                     else:
                         if board[row][col] != '--' and board[row][col][0] == player_turn:
                             selected_square = (row, col)
+                            possible_moves = get_possible_moves(board, selected_square)
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_u:  # Press 'u' to undo the last move
                     player_turn = undo_last_move()
 
-        draw_board(screen, selected_square)
+        draw_board(screen, selected_square, possible_moves)
         draw_pieces(screen, board)
         undo_button = draw_button(screen, 'Undo', WIDTH - 100, HEIGHT - 50, 80, 40)
         pygame.display.flip()
@@ -225,5 +243,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-#PRAISE
