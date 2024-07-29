@@ -98,6 +98,36 @@ def check_game_over(board):
     kings = [piece for row in board for piece in row if piece[1] == 'K']
     return len(kings) < 2
 
+def is_in_check(board, player):
+    king_pos = None
+    for row in range(ROWS):
+        for col in range(COLS):
+            if board[row][col] == f'{player}K':
+                king_pos = (row, col)
+                break
+        if king_pos:
+            break
+
+    opponent = 'b' if player == 'w' else 'w'
+    for row in range(ROWS):
+        for col in range(COLS):
+            if board[row][col].startswith(opponent):
+                if is_valid_move(board, (row, col), king_pos):
+                    return True
+    return False
+
+def show_check_alert(player):
+    pygame.display.set_caption(f"Check! {player} King is in danger!")
+    check_alert = pygame.Surface((200, 100))
+    check_alert.fill((255, 0, 0))
+    font = pygame.font.Font(None, 36)
+    text = font.render(f"{player} King is in check!", True, (255, 255, 255))
+    check_alert.blit(text, (10, 30))
+    screen.blit(check_alert, (WIDTH//2 - 100, HEIGHT//2 - 50))
+    pygame.display.update()
+    pygame.time.delay(2000)
+    pygame.display.set_caption('Chess')
+
 def main():
     clock = pygame.time.Clock()
     board = [
@@ -129,6 +159,10 @@ def main():
                             print(f"Game over! {player_turn} wins!")
                             pygame.quit()
                             sys.exit()
+                        if is_in_check(board, 'b'):
+                            show_check_alert('Black')
+                        if is_in_check(board, 'w'):
+                            show_check_alert('White')
                         selected_square = None
                         player_turn = 'b' if player_turn == 'w' else 'w'
                     else:
